@@ -9,6 +9,10 @@ import (
 	"strings"
 )
 
+// Callback function from proxy to postgresql for rewrite
+// request or sql.
+type Callback func(get string) string
+
 // Extracte sql statement from string
 func Extracte(str []byte) string {
 	return string(str)[5:]

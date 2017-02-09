@@ -16,10 +16,6 @@ import (
 	"github.com/wgliang/pgproxy/filter"
 )
 
-// Callback function from proxy to postgresql for rewrite
-// request or sql.
-type Callback func(get string) string
-
 var (
 	connid = uint64(0) // Self-increasing ConnectID.
 )
@@ -27,7 +23,7 @@ var (
 // Start proxy server needed receive  and proxyHost, all
 // the request or database's sql of receive will redirect
 // to remoteHost.
-func Start(proxyHost, remoteHost string, powerCallback Callback) {
+func Start(proxyHost, remoteHost string, powerCallback filter.Callback) {
 	glog.Infof("Proxying from %v to %v\n", proxyHost, remoteHost)
 
 	proxyAddr, remoteAddr := getResolvedAddresses(proxyHost, remoteHost)
@@ -99,7 +95,7 @@ func (p *proxy) err(s string, err error) {
 }
 
 // proxy.start
-func (p *proxy) start(powerCallback Callback) {
+func (p *proxy) start(powerCallback filter.Callback) {
 	defer p.lconn.Close()
 	// connect to remote
 	rconn, err := net.DialTCP("tcp", nil, p.raddr)
@@ -117,7 +113,7 @@ func (p *proxy) start(powerCallback Callback) {
 }
 
 // proxy.pipe
-func (p *proxy) pipe(src, dst *net.TCPConn, powerCallback Callback) {
+func (p *proxy) pipe(src, dst *net.TCPConn, powerCallback filter.Callback) {
 	// data direction
 	islocal := src == p.lconn
 	// directional copy (64k buffer)
@@ -152,7 +148,7 @@ func (p *proxy) pipe(src, dst *net.TCPConn, powerCallback Callback) {
 }
 
 // ModifiedBuffer when is local and will call powerCallback function
-func getModifiedBuffer(buffer []byte, powerCallback Callback) []byte {
+func getModifiedBuffer(buffer []byte, powerCallback filter.Callback) []byte {
 	if powerCallback == nil || len(buffer) < 1 || string(buffer[0]) != "Q" || string(buffer[5:11]) != "power:" {
 		return buffer
 	}
