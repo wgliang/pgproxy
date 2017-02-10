@@ -13,7 +13,7 @@ import (
 	"net"
 
 	"github.com/golang/glog"
-	"github.com/wgliang/pgproxy/filter"
+	"github.com/wgliang/pgproxy/parser"
 )
 
 var (
@@ -23,7 +23,7 @@ var (
 // Start proxy server needed receive  and proxyHost, all
 // the request or database's sql of receive will redirect
 // to remoteHost.
-func Start(proxyHost, remoteHost string, powerCallback filter.Callback) {
+func Start(proxyHost, remoteHost string, powerCallback parser.Callback) {
 	glog.Infof("Proxying from %v to %v\n", proxyHost, remoteHost)
 
 	proxyAddr := getResolvedAddresses(proxyHost)
@@ -105,7 +105,7 @@ func (p *Proxy) err(s string, err error) {
 }
 
 // Proxy.start open connection to remote and start proxying data.
-func (p *Proxy) start(powerCallback filter.Callback) {
+func (p *Proxy) start(powerCallback parser.Callback) {
 	defer p.lconn.Close()
 	// connect to remote server
 	rconn, err := net.DialTCP("tcp", nil, p.raddr)
@@ -123,7 +123,7 @@ func (p *Proxy) start(powerCallback filter.Callback) {
 }
 
 // Proxy.pipe
-func (p *Proxy) pipe(src, dst *net.TCPConn, powerCallback filter.Callback) {
+func (p *Proxy) pipe(src, dst *net.TCPConn, powerCallback parser.Callback) {
 	// data direction
 	islocal := src == p.lconn
 	// directional copy (64k buffer)
@@ -139,9 +139,8 @@ func (p *Proxy) pipe(src, dst *net.TCPConn, powerCallback filter.Callback) {
 		b := buff[:n]
 
 		if string(b[0]) == "Q" {
-			b = filter.ReWriteSQL(b)
+			parser.Filter(b)
 		}
-
 		// show output
 		if islocal {
 			b = getModifiedBuffer(b, powerCallback)
@@ -158,7 +157,7 @@ func (p *Proxy) pipe(src, dst *net.TCPConn, powerCallback filter.Callback) {
 }
 
 // ModifiedBuffer when is local and will call powerCallback function
-func getModifiedBuffer(buffer []byte, powerCallback filter.Callback) []byte {
+func getModifiedBuffer(buffer []byte, powerCallback parser.Callback) []byte {
 	if powerCallback == nil || len(buffer) < 1 || string(buffer[0]) != "Q" || string(buffer[5:11]) != "power:" {
 		return buffer
 	}

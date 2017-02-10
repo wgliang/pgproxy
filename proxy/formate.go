@@ -60,6 +60,15 @@ func RowsFormater(rows *sql.Rows) {
 	}
 }
 
+func ResultFormater(res sql.Result) {
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Printf("OK, %d rows affected\n", rowsAffected)
+	}
+}
+
 // Convert type interface{} into string just for friendly display.
 func interface2String(input interface{}) string {
 	switch input.(type) {

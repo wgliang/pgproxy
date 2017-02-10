@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/golang/glog"
-	"github.com/wgliang/pgproxy/filter"
+	"github.com/wgliang/pgproxy/parser"
 	"github.com/wgliang/pgproxy/proxy"
 )
 
@@ -41,7 +41,7 @@ func Main() {
 		if args[1] == "start" {
 			glog.Infoln("Starting pgproxy...")
 			info()
-			proxy.Start(proxyAddr, remoteAddr, filter.GetQueryModificada)
+			proxy.Start(proxyAddr, remoteAddr, parser.GetQueryModificada)
 			glog.Infoln("Started pgproxy successfully.")
 		} else if args[1] == "cli" {
 			Command()

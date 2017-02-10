@@ -40,8 +40,8 @@ func Command() {
 		}
 	}()
 	fmt.Printf("	pgproxy (%s)\n", VERSION)
+	fmt.Println("	Login in:", time.Unix(client.timestamp, 0).Format("2006-01-02 03:04:05 PM"))
 	fmt.Println(`	Type "help" for help.`)
-	fmt.Println("	login in:", time.Unix(client.timestamp, 0).Format("2006-01-02 03:04:05 PM"))
 	running := true
 	reader := bufio.NewReader(os.Stdin)
 	for running {
@@ -79,14 +79,8 @@ func (c *Client) Request(sql string) {
 		res, err := c.db.Exec(sql)
 		if err != nil {
 			glog.Errorln(err)
-			fmt.Println(err)
 		} else {
-			rowsAffected, err := res.RowsAffected()
-			if err != nil {
-				fmt.Println(err)
-			} else {
-				fmt.Printf("OK, %d rows affected\n", rowsAffected)
-			}
+			proxy.ResultFormater(res)
 		}
 	case `\d`, `\l`, `\q`:
 		// res := c.db.Exec(sql)
