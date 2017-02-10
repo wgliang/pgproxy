@@ -9,7 +9,8 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/wgliang/pgproxy)](https://goreportcard.com/report/github.com/wgliang/pgproxy)
 [![License](https://img.shields.io/badge/LICENSE-Apache2.0-ff69b4.svg)](http://www.apache.org/licenses/LICENSE-2.0.html)
 
-PostgreSQL proxy server.
+pgproxy is a postgresql proxy server, through a pipe redirect connection,then you can filter the requested sql statement. The future it will support multi-database backup, adapt to distributed databases and other scenes except analysis sql statement.
+
 
 ## Installation
 
@@ -19,12 +20,22 @@ $ go get -u github.com/wgliang/pgproxy
 
 ## Using
 
-start proxy server
+Start or shut down the proxy server.
 ```
 $ pgproxy start/stop
 ```
 
-start cli
+Use pgproxy on the command line
 ```
 $ pgproxy cli
 ```
+
+Ps: You can use it as you would with a native command line.
+
+## Support
+
+select/delete/update statement and support any case.
+
+## Credits
+
+package parser is base on [sqlparser](https://github.com/xwb1989/sqlparser)
