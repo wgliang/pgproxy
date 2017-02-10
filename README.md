@@ -1,3 +1,5 @@
+![pgproxy](./proxy.png)
+
 # pgproxy
 [![Build Status](https://travis-ci.org/wgliang/pgproxy.svg?branch=master)](https://travis-ci.org/wgliang/pgproxy)
 [![codecov](https://codecov.io/gh/wgliang/pgproxy/branch/master/graph/badge.svg)](https://codecov.io/gh/wgliang/pgproxy)
