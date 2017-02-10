@@ -26,7 +26,8 @@ var (
 func Start(proxyHost, remoteHost string, powerCallback filter.Callback) {
 	glog.Infof("Proxying from %v to %v\n", proxyHost, remoteHost)
 
-	proxyAddr, remoteAddr := getResolvedAddresses(proxyHost, remoteHost)
+	proxyAddr := getResolvedAddresses(proxyHost)
+	remoteAddr := getResolvedAddresses(remoteHost)
 	listener := getListener(proxyAddr)
 
 	for {
@@ -37,7 +38,7 @@ func Start(proxyHost, remoteHost string, powerCallback filter.Callback) {
 		}
 		connid++
 
-		p := &proxy{
+		p := &Proxy{
 			lconn:  conn,
 			laddr:  proxyAddr,
 			raddr:  remoteAddr,
@@ -49,17 +50,13 @@ func Start(proxyHost, remoteHost string, powerCallback filter.Callback) {
 	}
 }
 
-// ResolvedAddresses of proxyHost and remoteHost.
-func getResolvedAddresses(proxyHost, remoteHost string) (*net.TCPAddr, *net.TCPAddr) {
-	paddr, err := net.ResolveTCPAddr("tcp", proxyHost)
+// ResolvedAddresses of host.
+func getResolvedAddresses(host string) *net.TCPAddr {
+	addr, err := net.ResolveTCPAddr("tcp", host)
 	if err != nil {
-		glog.Fatalln("ResolveTCPAddr of proxyHost:", err)
+		glog.Fatalln("ResolveTCPAddr of host:", err)
 	}
-	raddr, err := net.ResolveTCPAddr("tcp", remoteHost)
-	if err != nil {
-		glog.Fatalln("ResolveTCPAddr of remoteHost:", err)
-	}
-	return paddr, raddr
+	return addr
 }
 
 // Listener of a net.TCPAddr.
@@ -71,8 +68,8 @@ func getListener(addr *net.TCPAddr) *net.TCPListener {
 	return listener
 }
 
-// proxy struct.
-type proxy struct {
+// Proxy - Manages a Proxy connection, piping data between proxy and remote.
+type Proxy struct {
 	sentBytes     uint64
 	receivedBytes uint64
 	laddr, raddr  *net.TCPAddr
@@ -82,8 +79,21 @@ type proxy struct {
 	prefix        string
 }
 
+// New - Create a new Proxy instance. Takes over local connection passed in,
+// and closes it when finished.
+func New(conn *net.TCPConn, proxyAddr, remoteAddr *net.TCPAddr, connid int64) *Proxy {
+	return &Proxy{
+		lconn:  conn,
+		laddr:  proxyAddr,
+		raddr:  remoteAddr,
+		erred:  false,
+		errsig: make(chan bool),
+		prefix: fmt.Sprintf("Connection #%03d ", connid),
+	}
+}
+
 // proxy.err
-func (p *proxy) err(s string, err error) {
+func (p *Proxy) err(s string, err error) {
 	if p.erred {
 		return
 	}
@@ -94,10 +104,10 @@ func (p *proxy) err(s string, err error) {
 	p.erred = true
 }
 
-// proxy.start
-func (p *proxy) start(powerCallback filter.Callback) {
+// Proxy.start open connection to remote and start proxying data.
+func (p *Proxy) start(powerCallback filter.Callback) {
 	defer p.lconn.Close()
-	// connect to remote
+	// connect to remote server
 	rconn, err := net.DialTCP("tcp", nil, p.raddr)
 	if err != nil {
 		p.err("Remote connection failed: %s", err)
@@ -105,15 +115,15 @@ func (p *proxy) start(powerCallback filter.Callback) {
 	}
 	p.rconn = rconn
 	defer p.rconn.Close()
-	// bidirectional copy
+	// proxying data
 	go p.pipe(p.lconn, p.rconn, powerCallback)
 	go p.pipe(p.rconn, p.lconn, nil)
 	// wait for close...
 	<-p.errsig
 }
 
-// proxy.pipe
-func (p *proxy) pipe(src, dst *net.TCPConn, powerCallback filter.Callback) {
+// Proxy.pipe
+func (p *Proxy) pipe(src, dst *net.TCPConn, powerCallback filter.Callback) {
 	// data direction
 	islocal := src == p.lconn
 	// directional copy (64k buffer)
@@ -137,7 +147,7 @@ func (p *proxy) pipe(src, dst *net.TCPConn, powerCallback filter.Callback) {
 			b = getModifiedBuffer(b, powerCallback)
 			n, err = dst.Write(b)
 		} else {
-			//write out result
+			// write out result
 			n, err = dst.Write(b)
 		}
 		if err != nil {

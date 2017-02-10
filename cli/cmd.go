@@ -39,9 +39,9 @@ func Command() {
 			glog.Errorln(err)
 		}
 	}()
-	fmt.Printf("pgproxy Vesion-(%s)\n", VERSION)
-	fmt.Println(`Type "help" for help.`)
-	fmt.Println("login in:", time.Unix(client.timestamp, 0).Format("2006-01-02 03:04:05 PM"))
+	fmt.Printf("	pgproxy (%s)\n", VERSION)
+	fmt.Println(`	Type "help" for help.`)
+	fmt.Println("	login in:", time.Unix(client.timestamp, 0).Format("2006-01-02 03:04:05 PM"))
 	running := true
 	reader := bufio.NewReader(os.Stdin)
 	for running {

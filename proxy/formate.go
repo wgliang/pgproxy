@@ -55,6 +55,9 @@ func RowsFormater(rows *sql.Rows) {
 		table.Append(v)
 	}
 	table.Render()
+	if len(data) > 4 {
+		fmt.Printf("(%d rows of records)\n", len(data)-4)
+	}
 }
 
 // Convert type interface{} into string just for friendly display.
