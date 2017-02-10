@@ -1,4 +1,4 @@
-![pgproxy](./proxy.png)
+![pgproxy](./pgproxy.png)
 
 # pgproxy
 [![Build Status](https://travis-ci.org/wgliang/pgproxy.svg?branch=master)](https://travis-ci.org/wgliang/pgproxy)
