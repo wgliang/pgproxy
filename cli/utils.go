@@ -46,6 +46,6 @@ func readConfig(file string) (pc ProxyConfig, connStr string) {
 
 	sepindex := strings.Index(pc.DB["master"].Addr, ":")
 
-	return pc, fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+	return pc, fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s application_name=pgproxy sslmode=disable",
 		pc.DB["master"].Addr[0:sepindex], pc.DB["master"].Addr[(sepindex+1):], pc.DB["master"].User, pc.DB["master"].Password, pc.DB["master"].DbName)
 }

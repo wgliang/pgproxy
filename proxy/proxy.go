@@ -24,6 +24,7 @@ var (
 // the request or database's sql of receive will redirect
 // to remoteHost.
 func Start(proxyHost, remoteHost string, powerCallback parser.Callback) {
+	defer glog.Flush()
 	glog.Infof("Proxying from %v to %v\n", proxyHost, remoteHost)
 
 	proxyAddr := getResolvedAddresses(proxyHost)

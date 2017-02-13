@@ -36,9 +36,9 @@ func Command() {
 	client.timestamp = time.Now().Unix()
 
 	// Set connections num
-	client.db.SetMaxIdleConns(5)
-	client.db.SetMaxOpenConns(100)
-
+	client.db.SetMaxIdleConns(1)
+	client.db.SetMaxOpenConns(10)
+	client.db.SetConnMaxLifetime(60 * time.Second)
 	defer func() {
 		client.db.Close()
 		if err != nil {

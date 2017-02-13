@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"syscall"
 	"time"
 
 	"github.com/golang/glog"
@@ -23,7 +24,10 @@ var (
 	pc      ProxyConfig
 )
 
+// pgproxy Main
 func Main(config interface{}, pargs interface{}) {
+	flag.Parse()
+
 	var args []string
 	if nil != config {
 		pc, connStr = readConfig(config.(string))
@@ -33,32 +37,29 @@ func Main(config interface{}, pargs interface{}) {
 		args = os.Args
 	}
 
-	flag.Parse()
-	defer glog.Flush()
-
 	if len(args) < 2 {
 		glog.Errorln("needed one parameters:", args)
 		help()
-		return
-	} else if len(args) > 2 {
-		glog.Fatalln("Too many parameters:", args)
 		return
 	} else {
 		if args[1] == "start" {
 			glog.Infoln("Starting pgproxy...")
 			info()
+			logDir()
+			saveCurrentPid()
 			proxy.Start(pc.ServerConfig.ProxyAddr, pc.DB["master"].Addr, parser.GetQueryModificada)
 			glog.Infoln("Started pgproxy successfully.")
 		} else if args[1] == "cli" {
 			Command()
 		} else if args[1] == "stop" {
-			// stop pgproxy
+			stop()
 		} else {
 			help()
 		}
 	}
 }
 
+// print pgproxy help
 func help() {
 	fmt.Println("	pgproxy is a proxy-server for database postgresql.")
 	fmt.Println("	start :start pgproxy server.")
@@ -67,6 +68,7 @@ func help() {
 	fmt.Println("	info :pgproxy info.")
 }
 
+// print pgproxy infomation
 func info() {
 	hostname, err := os.Hostname()
 	if err != nil {
@@ -80,4 +82,74 @@ func info() {
 	fmt.Println("	Pid: " + string(pid))
 	fmt.Println("	Starttime: " + starttime)
 	fmt.Println()
+}
+
+// set log dir
+func logDir() {
+	_, err := os.Stat("./log")
+	if err != nil && os.IsNotExist(err) {
+		err := os.MkdirAll("./log", 0777)
+		if err != nil {
+			glog.Fatalln(err)
+		} else {
+			glog.Infoln("glog and process pid in ./log")
+		}
+	}
+}
+
+// save current pgproxy pid
+func saveCurrentPid() {
+	// pid file
+	filepath := "./log/pid.log"
+	fout, err := os.OpenFile(filepath, os.O_CREATE|os.O_RDWR, 0777)
+	if err != nil {
+		glog.Errorln(err)
+		return
+	}
+	defer fout.Close()
+	// write current pid
+	fout.WriteString(strconv.Itoa(os.Getpid()))
+}
+
+// get current pgproxy pid
+func getCurrentPid() int {
+	// pid file
+	filepath := "./log/pid.log"
+	fin, err := os.OpenFile(filepath, os.O_RDONLY, 0777)
+	if err != nil {
+		glog.Errorln(err)
+		return 0
+	}
+	defer fin.Close()
+	// read current pid
+	buf := make([]byte, 1024)
+
+	n, _ := fin.Read(buf)
+	if 0 >= n {
+		return 0
+	} else {
+		pid, err := strconv.Atoi(string(buf[0:n]))
+		if err != nil {
+			glog.Errorln(err)
+			return 0
+		} else {
+			return pid
+		}
+	}
+
+	return 0
+}
+
+// stop pgproxy
+func stop() {
+	pid := getCurrentPid()
+	if pid != 0 {
+		err := syscall.Kill(pid, syscall.SIGTERM)
+		if err != nil {
+			glog.Errorln(err)
+		} else {
+			glog.Infoln("pgproxy exit successfully!")
+		}
+	}
+	fmt.Printf("pgproxy(%d) Exit,thanks.\n", pid)
 }
