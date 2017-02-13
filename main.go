@@ -10,5 +10,5 @@ import (
 )
 
 func main() {
-	cli.Main()
+	cli.Main(nil, nil)
 }

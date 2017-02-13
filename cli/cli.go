@@ -22,14 +22,19 @@ var (
 	proxyAddr, remoteAddr, connStr string
 )
 
-func init() {
+func Main(config interface{}, pargs interface{}) {
+	var args []string
+	if nil != config {
+		proxyAddr, remoteAddr, connStr = readConfig(config.(string))
+		args = pargs.([]string)
+	} else {
+		proxyAddr, remoteAddr, connStr = readConfig("./pgproxy.json")
+		args = os.Args
+	}
+
 	flag.Parse()
 	defer glog.Flush()
-	proxyAddr, remoteAddr, connStr = readConfig("./pgproxy.json")
-}
 
-func Main() {
-	args := os.Args
 	if len(args) < 2 {
 		glog.Errorln("needed one parameters:", args)
 		help()
@@ -69,7 +74,7 @@ func info() {
 	fmt.Println(Logo)
 	pid := strconv.Itoa(os.Getpid())
 	starttime := time.Now().Format("2006-01-02 03:04:05 PM")
-	fmt.Println("	", VERSION)
+	fmt.Println("		", VERSION)
 	fmt.Println("	Host: " + hostname)
 	fmt.Println("	Pid: " + string(pid))
 	fmt.Println("	Starttime: " + starttime)

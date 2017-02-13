@@ -20,6 +20,7 @@ import (
 // |       3 | 180.17.95.4    | Lin      |
 // |       4 | 180.17.95.5    | Trump    |
 // +---------+----------------+----------+
+// else error
 func RowsFormater(rows *sql.Rows) {
 	cols, err := rows.Columns()
 	if err != nil {
@@ -60,6 +61,10 @@ func RowsFormater(rows *sql.Rows) {
 	}
 }
 
+// Parse exec's results and formate it,then will be print
+// in command line such as:
+// OK, [n] rows affected
+// else error
 func ResultFormater(res sql.Result) {
 	rowsAffected, err := res.RowsAffected()
 	if err != nil {

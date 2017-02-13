@@ -20,6 +20,8 @@ $ go get -u github.com/wgliang/pgproxy
 
 ## Using
 
+### As a separate application
+
 Start or shut down the proxy server.
 ```
 $ pgproxy start/stop
@@ -31,6 +33,37 @@ $ pgproxy cli
 ```
 
 Ps: You can use it as you would with a native command line.
+
+### Be called as a package
+
+[package_example](https://github.com/wgliang/pgproxy/blob/master/examples/package_example.go)
+
+```
+package main
+
+import (
+	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
+
+	"github.com/wgliang/pgproxy/cli"
+)
+
+func main() {
+	// call proxy
+	cli.Main("../pgproxy.json", []string{"pgproxy", "start"})
+	
+	// 捕获ctrl-c,平滑退出
+	chExit := make(chan os.Signal, 1)
+	signal.Notify(chExit, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
+	select {
+	case <-chExit:
+		fmt.Println("Example EXITING...Bye.")
+	}
+}
+
+```
 
 ## Support
 
