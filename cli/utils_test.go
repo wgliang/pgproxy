@@ -5,5 +5,5 @@ import (
 )
 
 func Test_readConfig(t *testing.T) {
-	readConfig("../pgproxy.json")
+	readConfig("../pgproxy.conf")
 }

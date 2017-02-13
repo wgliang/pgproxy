@@ -5,5 +5,5 @@ import (
 )
 
 func Test_Main(t *testing.T) {
-	Main()
+	Main(nil, nil)
 }

@@ -19,16 +19,17 @@ import (
 )
 
 var (
-	proxyAddr, remoteAddr, connStr string
+	connStr string
+	pc      ProxyConfig
 )
 
 func Main(config interface{}, pargs interface{}) {
 	var args []string
 	if nil != config {
-		proxyAddr, remoteAddr, connStr = readConfig(config.(string))
+		pc, connStr = readConfig(config.(string))
 		args = pargs.([]string)
 	} else {
-		proxyAddr, remoteAddr, connStr = readConfig("./pgproxy.json")
+		pc, connStr = readConfig("./pgproxy.conf")
 		args = os.Args
 	}
 
@@ -46,7 +47,7 @@ func Main(config interface{}, pargs interface{}) {
 		if args[1] == "start" {
 			glog.Infoln("Starting pgproxy...")
 			info()
-			proxy.Start(proxyAddr, remoteAddr, parser.GetQueryModificada)
+			proxy.Start(pc.ServerConfig.ProxyAddr, pc.DB["master"].Addr, parser.GetQueryModificada)
 			glog.Infoln("Started pgproxy successfully.")
 		} else if args[1] == "cli" {
 			Command()

@@ -11,6 +11,15 @@
 
 pgproxy is a postgresql proxy server, through a pipe redirect connection,then you can filter the requested sql statement. The future it will support multi-database backup, adapt to distributed databases and other scenes except analysis sql statement.
 
+You can do:
+
+* database read and write separation
+* database services disaster recovery
+* proxy database
+* rewrite sql statement
+* filter dangerous sql
+* monitor database operations
+* sql requests current limit and merge
 
 ## Installation
 

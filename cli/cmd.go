@@ -1,3 +1,9 @@
+// Copyright 2017 wgliang. All rights reserved.
+// Use of this source code is governed by Apache
+// license that can be found in the LICENSE file.
+
+// Package cli provides virtual command-line access
+// in pgproxy include start,cli and stop action.
 package cli
 
 import (

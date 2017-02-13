@@ -21,7 +21,7 @@ func Benchmark_Start(b *testing.B) {
 	go Start(testProxyHost, testRemoteHost, filter.GetQueryModificada)
 	time.Sleep(3 * time.Second)
 
-	db, err := sqlx.Open("postgres", "host=127.0.0.1 user=postgres password=xxxxx dbname=skylar port=9090 sslmode=disable")
+	db, err := sqlx.Open("postgres", "host=127.0.0.1 user=postgres password=xxxxx dbname=db port=9090 sslmode=disable")
 	if err != nil {
 		b.Error(err)
 	}
@@ -56,7 +56,7 @@ func Test_Start(t *testing.T) {
 	go Start(testProxyHost, testRemoteHost, filter.GetQueryModificada)
 	time.Sleep(3 * time.Second)
 
-	db, err := sqlx.Open("postgres", "host=127.0.0.1 user=postgres password=xxxxx dbname=skylar port=9090 sslmode=disable")
+	db, err := sqlx.Open("postgres", "host=127.0.0.1 user=postgres password=xxxxx dbname=db port=9090 sslmode=disable")
 	if err != nil {
 		t.Error(err)
 	}

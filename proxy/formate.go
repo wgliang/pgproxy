@@ -1,3 +1,9 @@
+// Copyright 2017 wgliang. All rights reserved.
+// Use of this source code is governed by Apache
+// license that can be found in the LICENSE file.
+
+// Package proxy provides proxy service and redirects requests
+// form proxy.Addr to remote.Addr.
 package proxy
 
 import (

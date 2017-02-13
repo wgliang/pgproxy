@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	db, err := sqlx.Open("postgres", "host=127.0.0.1 port=9090 user=postgres password=postgres dbname=skylar sslmode=disable")
+	db, err := sqlx.Open("postgres", "host=127.0.0.1 port=9090 user=postgres password=postgres dbname=db sslmode=disable")
 	if err != nil {
 		fmt.Println(err)
 	}

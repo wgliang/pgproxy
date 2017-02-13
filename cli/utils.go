@@ -1,11 +1,16 @@
+// Copyright 2017 wgliang. All rights reserved.
+// Use of this source code is governed by Apache
+// license that can be found in the LICENSE file.
+
+// Package cli provides virtual command-line access
+// in pgproxy include start,cli and stop action.
 package cli
 
 import (
-	"encoding/json"
 	"fmt"
-	"os"
 	"strings"
 
+	"github.com/bbangert/toml"
 	"github.com/golang/glog"
 )
 
@@ -23,29 +28,24 @@ const (
 
 // proxy server config struct
 type ProxyConfig struct {
-	ProxyAddr  string `json:"proxyAddr"`
-	RemoteAddr string `json:"remoteAddr"`
-	PgUser     string `json:"pgUser"`
-	PgPassword string `json:"pgPassword"`
-	PgDb       string `json:"pgDb"`
+	ServerConfig struct {
+		ProxyAddr string
+	}
+	DB map[string]struct {
+		Addr     string
+		User     string
+		Password string
+		DbName   string
+	} `toml:"DB"`
 }
 
-// readConfig file
-func readConfig(file string) (proxy, remote, connstr string) {
-	f, err := os.Open(file)
-	if err != nil {
-		glog.Errorln(err)
-		return
+func readConfig(file string) (pc ProxyConfig, connStr string) {
+	if _, err := toml.DecodeFile(file, &pc); err != nil {
+		glog.Fatalln(err)
 	}
 
-	var p ProxyConfig
-	if err = json.NewDecoder(f).Decode(&p); err != nil {
-		glog.Errorln(err)
-		return
-	}
+	sepindex := strings.Index(pc.DB["master"].Addr, ":")
 
-	sepindex := strings.Index(p.ProxyAddr, ":")
-
-	return p.ProxyAddr, p.RemoteAddr, fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=skylar sslmode=disable",
-		p.ProxyAddr[0:sepindex], p.ProxyAddr[(sepindex+1):], p.PgUser, p.PgPassword)
+	return pc, fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		pc.DB["master"].Addr[0:sepindex], pc.DB["master"].Addr[(sepindex+1):], pc.DB["master"].User, pc.DB["master"].Password, pc.DB["master"].DbName)
 }
