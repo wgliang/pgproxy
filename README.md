@@ -61,7 +61,7 @@ import (
 
 func main() {
 	// call proxy
-	cli.Main("../pgproxy.json", []string{"pgproxy", "start"})
+	cli.Main("../pgproxy.conf", []string{"pgproxy", "start"})
 	
 	// 捕获ctrl-c,平滑退出
 	chExit := make(chan os.Signal, 1)
