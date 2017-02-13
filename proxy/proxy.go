@@ -8,6 +8,7 @@ package proxy
 
 import (
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -140,8 +141,11 @@ func (p *Proxy) pipe(src, dst *net.TCPConn, powerCallback parser.Callback) {
 		b := buff[:n]
 
 		if string(b[0]) == "Q" {
-			parser.Filter(b)
+			if !parser.Filter(b) {
+				p.err("Do not meet the rules of the sql statement %s\n", errors.New(string(b[1:])))
+			}
 		}
+
 		// show output
 		if islocal {
 			b = getModifiedBuffer(b, powerCallback)

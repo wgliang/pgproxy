@@ -4,6 +4,7 @@ Tests for analyzer.go
 package parser
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
