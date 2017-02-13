@@ -1,7 +1,7 @@
 {
 	"proxyAddr":"127.0.0.1:9090",
-	"remoteAddr":"10.16.93.15:5432",
+	"remoteAddr":"127.0.0.1:5432",
 	"pgUser":"postgres",
-	"pgPassword":"Ilove360!",
+	"pgPassword":"postgres",
 	"pgDb":"skylar"
 }
