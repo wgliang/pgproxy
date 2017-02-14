@@ -9,7 +9,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/wgliang/pgproxy)](https://goreportcard.com/report/github.com/wgliang/pgproxy)
 [![License](https://img.shields.io/badge/LICENSE-Apache2.0-ff69b4.svg)](http://www.apache.org/licenses/LICENSE-2.0.html)
 
-pgproxy is a postgresql proxy server, through a pipe redirect connection,then you can filter the requested sql statement. The future it will support multi-database backup, adapt to distributed databases and other scenes except analysis sql statement.
+pgproxy is a postgresql proxy server, through a pipe redirect connection, which allows you to filter the requested sql statement. In the future it will support multi-database backup, adapt to distributed databases and other schemes except the  analyze sql statement.
 
 You can do:
 
@@ -80,11 +80,11 @@ select/delete/update statement and support any case.
 
 On the support of the sql standard：
 
-parser is froked from vitess's [sqlparser](https://github.com/youtube/vitess/tree/master/go/vt/sqlparser) of youtube.
+The parser is forked from vitess's [sqlparser](https://github.com/youtube/vitess/tree/master/go/vt/sqlparser) of youtube.
 
 In pgproxy, database tables are like MySQL(5.6,5.7) relational tables, and you can use relational modeling schemes (normalization) to structure your schema. It supports almost all MySQL(5.6,5.7) scalar data types. It also provides full SQL support within a shard, including JOIN statements. Some postgresql operations are not supported,detail see [support type and keywords](https://github.com/wgliang/pgproxy/blob/master/parser/token.go#L37).
 
 
 ## Credits
 
-package parser is base on [sqlparser](https://github.com/xwb1989/sqlparser)
+Package parser is based on [sqlparser](https://github.com/xwb1989/sqlparser)
