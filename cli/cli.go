@@ -47,7 +47,7 @@ func Main(config interface{}, pargs interface{}) {
 			info()
 			logDir()
 			saveCurrentPid()
-			proxy.Start(pc.ServerConfig.ProxyAddr, pc.DB["master"].Addr, parser.GetQueryModificada)
+			proxy.Start(pc.ServerConfig.ProxyAddr, pc.DB["master"].Addr, parser.Filter, parser.Return)
 			glog.Infoln("Started pgproxy successfully.")
 		} else if args[1] == "cli" {
 			Command()

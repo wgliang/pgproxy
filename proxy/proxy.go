@@ -7,7 +7,8 @@
 package proxy
 
 import (
-	"encoding/binary"
+	// "bytes"
+	// "encoding/binary"
 	"errors"
 	"fmt"
 	"io"
@@ -24,7 +25,7 @@ var (
 // Start proxy server needed receive  and proxyHost, all
 // the request or database's sql of receive will redirect
 // to remoteHost.
-func Start(proxyHost, remoteHost string, powerCallback parser.Callback) {
+func Start(proxyHost, remoteHost string, filterCallback, returnCallBack parser.Callback) {
 	defer glog.Flush()
 	glog.Infof("Proxying from %v to %v\n", proxyHost, remoteHost)
 
@@ -47,8 +48,9 @@ func Start(proxyHost, remoteHost string, powerCallback parser.Callback) {
 			erred:  false,
 			errsig: make(chan bool),
 			prefix: fmt.Sprintf("Connection #%03d ", connid),
+			connId: connid,
 		}
-		go p.start(powerCallback)
+		go p.service(filterCallback, returnCallBack)
 	}
 }
 
@@ -79,11 +81,12 @@ type Proxy struct {
 	erred         bool
 	errsig        chan bool
 	prefix        string
+	connId        uint64
 }
 
 // New - Create a new Proxy instance. Takes over local connection passed in,
 // and closes it when finished.
-func New(conn *net.TCPConn, proxyAddr, remoteAddr *net.TCPAddr, connid int64) *Proxy {
+func New(conn *net.TCPConn, proxyAddr, remoteAddr *net.TCPAddr, connid uint64) *Proxy {
 	return &Proxy{
 		lconn:  conn,
 		laddr:  proxyAddr,
@@ -91,6 +94,7 @@ func New(conn *net.TCPConn, proxyAddr, remoteAddr *net.TCPAddr, connid int64) *P
 		erred:  false,
 		errsig: make(chan bool),
 		prefix: fmt.Sprintf("Connection #%03d ", connid),
+		connId: connid,
 	}
 }
 
@@ -100,14 +104,14 @@ func (p *Proxy) err(s string, err error) {
 		return
 	}
 	if err != io.EOF {
-		glog.Fatalf(p.prefix+s, err)
+		glog.Errorf(p.prefix+s, err)
 	}
 	p.errsig <- true
 	p.erred = true
 }
 
-// Proxy.start open connection to remote and start proxying data.
-func (p *Proxy) start(powerCallback parser.Callback) {
+// Proxy.service open connection to remote and service proxying data.
+func (p *Proxy) service(filterCallback, returnCallBack parser.Callback) {
 	defer p.lconn.Close()
 	// connect to remote server
 	rconn, err := net.DialTCP("tcp", nil, p.raddr)
@@ -118,16 +122,14 @@ func (p *Proxy) start(powerCallback parser.Callback) {
 	p.rconn = rconn
 	defer p.rconn.Close()
 	// proxying data
-	go p.pipe(p.lconn, p.rconn, powerCallback)
-	go p.pipe(p.rconn, p.lconn, nil)
+	go p.handleIncomingConnection(p.lconn, p.rconn, filterCallback)
+	go p.handleResponseConnection(p.rconn, p.lconn, returnCallBack)
 	// wait for close...
 	<-p.errsig
 }
 
-// Proxy.pipe
-func (p *Proxy) pipe(src, dst *net.TCPConn, powerCallback parser.Callback) {
-	// data direction
-	islocal := src == p.lconn
+// Proxy.handleIncomingConnection
+func (p *Proxy) handleIncomingConnection(src, dst *net.TCPConn, Callback parser.Callback) {
 	// directional copy (64k buffer)
 	buff := make([]byte, 0xffff)
 
@@ -137,23 +139,17 @@ func (p *Proxy) pipe(src, dst *net.TCPConn, powerCallback parser.Callback) {
 			p.err("Read failed '%s'\n", err)
 			return
 		}
-
-		b := buff[:n]
-
-		if string(b[0]) == "Q" {
-			if !parser.Filter(b) {
-				p.err("Do not meet the rules of the sql statement %s\n", errors.New(string(b[1:])))
+		b, err := getModifiedBuffer(buff[:n], Callback)
+		if err != nil {
+			p.err("%s\n", err)
+			err = dst.Close()
+			if err != nil {
+				glog.Errorln(err)
 			}
+			return
 		}
 
-		// show output
-		if islocal {
-			b = getModifiedBuffer(b, powerCallback)
-			n, err = dst.Write(b)
-		} else {
-			// write out result
-			n, err = dst.Write(b)
-		}
+		n, err = dst.Write(b)
 		if err != nil {
 			p.err("Write failed '%s'\n", err)
 			return
@@ -161,21 +157,45 @@ func (p *Proxy) pipe(src, dst *net.TCPConn, powerCallback parser.Callback) {
 	}
 }
 
-// ModifiedBuffer when is local and will call powerCallback function
-func getModifiedBuffer(buffer []byte, powerCallback parser.Callback) []byte {
-	if powerCallback == nil || len(buffer) < 1 || string(buffer[0]) != "Q" || string(buffer[5:11]) != "power:" {
-		return buffer
+// Proxy.handleResponseConnection
+func (p *Proxy) handleResponseConnection(src, dst *net.TCPConn, Callback parser.Callback) {
+	// directional copy (64k buffer)
+	buff := make([]byte, 0xffff)
+
+	for {
+		n, err := src.Read(buff)
+		if err != nil {
+			p.err("Read failed '%s'\n", err)
+			return
+		}
+		b := setResponseBuffer(p.erred, buff[:n], Callback)
+
+		n, err = dst.Write(b)
+		if err != nil {
+			p.err("Write failed '%s'\n", err)
+			return
+		}
 	}
-	query := powerCallback(string(buffer[5:]))
-	return makeMessage(query)
 }
 
-// make the query message.
-func makeMessage(query string) []byte {
-	queryArray := make([]byte, 0, 6+len(query))
-	queryArray = append(queryArray, 'Q', 0, 0, 0, 0)
-	queryArray = append(queryArray, query...)
-	queryArray = append(queryArray, 0)
-	binary.BigEndian.PutUint32(queryArray[1:], uint32(len(queryArray)-1))
-	return queryArray
+// ModifiedBuffer when is local and will call filterCallback function
+func getModifiedBuffer(buffer []byte, filterCallback parser.Callback) (b []byte, err error) {
+	if len(buffer) > 0 && string(buffer[0]) == "Q" {
+		if !filterCallback(buffer) {
+			return nil, errors.New(fmt.Sprintf("Do not meet the rules of the sql statement %s", string(buffer[1:])))
+		}
+	}
+
+	return buffer, nil
+}
+
+// ResponseBuffer when is local and will call returnCallback function
+func setResponseBuffer(iserr bool, buffer []byte, filterCallback parser.Callback) (b []byte) {
+	if len(buffer) > 0 && string(buffer[0]) == "Q" {
+		if !filterCallback(buffer) {
+			return nil
+		}
+	}
+
+	return buffer
 }
