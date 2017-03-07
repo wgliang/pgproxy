@@ -34,8 +34,8 @@ func RowsFormater(rows *sql.Rows) {
 	}
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader(cols)
-	data := make([][]string, len(cols))
-
+	data := make([][]string, 1)
+	count := 0
 	for rows.Next() {
 		columns := make([]interface{}, len(cols))
 		columnPointers := make([]interface{}, len(cols))
@@ -55,15 +55,16 @@ func RowsFormater(rows *sql.Rows) {
 			val := columnPointers[i].(*interface{})
 			row = append(row, interface2String(*val))
 		}
-		data = append(data, row)
-	}
 
+		data = append(data, row)
+		count = count + 1
+	}
 	for _, v := range data {
 		table.Append(v)
 	}
 	table.Render()
-	if len(data) > 4 {
-		fmt.Printf("(%d rows of records)\n", len(data)-4)
+	if count > 0 {
+		fmt.Printf("(%d rows of records)\n", count)
 	}
 }
 
