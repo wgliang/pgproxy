@@ -26,6 +26,8 @@ var (
 
 // pgproxy Main
 func Main(config interface{}, pargs interface{}) {
+	var proxyconf = flag.String("config", "pgproxy.conf", "configuration file for pgproxy")
+
 	flag.Parse()
 
 	var args []string
@@ -33,7 +35,7 @@ func Main(config interface{}, pargs interface{}) {
 		pc, connStr = readConfig(config.(string))
 		args = pargs.([]string)
 	} else {
-		pc, connStr = readConfig("./pgproxy.conf")
+		pc, connStr = readConfig(*proxyconf)
 		args = os.Args
 	}
 
@@ -44,7 +46,7 @@ func Main(config interface{}, pargs interface{}) {
 	} else {
 		if args[1] == "start" {
 			glog.Infoln("Starting pgproxy...")
-			info()
+			info(pc.ServerConfig.ProxyAddr)
 			logDir()
 			saveCurrentPid()
 			proxy.Start(pc.ServerConfig.ProxyAddr, pc.DB["master"].Addr, parser.Filter, parser.Return)
@@ -69,18 +71,19 @@ func help() {
 }
 
 // print pgproxy infomation
-func info() {
+func info(proxyhost string) {
+	fmt.Println(Logo)
 	hostname, err := os.Hostname()
 	if err != nil {
-		os.Exit(0)
+		hostname = "<unknown>"
 	}
-	fmt.Println(Logo)
 	pid := strconv.Itoa(os.Getpid())
 	starttime := time.Now().Format("2006-01-02 03:04:05 PM")
 	fmt.Println("		", VERSION)
 	fmt.Println("	Host: " + hostname)
-	fmt.Println("	Pid: " + string(pid))
-	fmt.Println("	Starttime: " + starttime)
+	fmt.Println("	Pid:", string(pid))
+	fmt.Println("	Proxy:", proxyhost)
+	fmt.Println("	Starttime:", starttime)
 	fmt.Println()
 }
 
