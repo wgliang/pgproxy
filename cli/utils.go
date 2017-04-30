@@ -44,7 +44,7 @@ type ProxyConfig struct {
 func readConfig(file string) (pc ProxyConfig, connStr string) {
 	if _, err := os.Stat(file); os.IsNotExist(err) {
 		glog.Errorln(err)
-		os.Exit(int(err.(syscall.Errno)))
+		os.Exit(int(syscall.ENOENT))
 	}
 
 	if _, err := toml.DecodeFile(file, &pc); err != nil {
