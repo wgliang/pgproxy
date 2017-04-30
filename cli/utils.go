@@ -8,6 +8,7 @@ package cli
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/bbangert/toml"
@@ -40,6 +41,10 @@ type ProxyConfig struct {
 }
 
 func readConfig(file string) (pc ProxyConfig, connStr string) {
+	if _, err := os.Stat(file); os.IsNotExist(err) {
+		glog.Fatalln(err)
+	}
+
 	if _, err := toml.DecodeFile(file, &pc); err != nil {
 		glog.Fatalln(err)
 	}
