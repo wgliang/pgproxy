@@ -138,8 +138,6 @@ func getCurrentPid() int {
 			return pid
 		}
 	}
-
-	return 0
 }
 
 // stop pgproxy

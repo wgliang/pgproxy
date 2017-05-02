@@ -93,5 +93,4 @@ func interface2String(input interface{}) string {
 	default:
 		return ""
 	}
-	return ""
 }
