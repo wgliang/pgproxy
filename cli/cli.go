@@ -27,6 +27,7 @@ var (
 // pgproxy Main
 func Main(config interface{}, pargs interface{}) {
 	flag.Parse()
+	defer glog.Flush()
 
 	var args []string
 	if nil != config {
@@ -35,6 +36,7 @@ func Main(config interface{}, pargs interface{}) {
 	} else {
 		pc, connStr = readConfig("./pgproxy.conf")
 		args = os.Args
+		fmt.Println(args)
 	}
 
 	if len(args) < 2 {
