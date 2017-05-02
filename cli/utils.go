@@ -8,7 +8,9 @@ package cli
 
 import (
 	"fmt"
+	"os"
 	"strings"
+	"syscall"
 
 	"github.com/bbangert/toml"
 	"github.com/golang/glog"
@@ -40,6 +42,11 @@ type ProxyConfig struct {
 }
 
 func readConfig(file string) (pc ProxyConfig, connStr string) {
+	if _, err := os.Stat(file); os.IsNotExist(err) {
+		glog.Errorln(err)
+		os.Exit(int(syscall.ENOENT))
+	}
+
 	if _, err := toml.DecodeFile(file, &pc); err != nil {
 		glog.Fatalln(err)
 	}
