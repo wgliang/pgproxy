@@ -9,7 +9,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
-	"github.com/wgliang/pgproxy/filter"
+	"github.com/wgliang/pgproxy/parser"
 )
 
 var (
@@ -18,7 +18,7 @@ var (
 )
 
 func Benchmark_Start(b *testing.B) {
-	go Start(testProxyHost, testRemoteHost, filter.GetQueryModificada)
+	go Start(testProxyHost, testRemoteHost, parser.GetQueryModificada)
 	time.Sleep(3 * time.Second)
 
 	db, err := sqlx.Open("postgres", "host=127.0.0.1 user=postgres password=xxxxx dbname=db port=9090 sslmode=disable")
@@ -53,7 +53,7 @@ func Benchmark_Start(b *testing.B) {
 }
 
 func Test_Start(t *testing.T) {
-	go Start(testProxyHost, testRemoteHost, filter.GetQueryModificada)
+	go Start(testProxyHost, testRemoteHost, parser.GetQueryModificada)
 	time.Sleep(3 * time.Second)
 
 	db, err := sqlx.Open("postgres", "host=127.0.0.1 user=postgres password=xxxxx dbname=db port=9090 sslmode=disable")
